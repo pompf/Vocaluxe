@@ -62,8 +62,16 @@ namespace Vocaluxe.Base.Fonts
                 fullSize = g.MeasureString(chrString, fo);
                 if (chr != ' ')
                 {
+                    /* Fetch the character's black box (the exact bitmap size required), the black box relative to the write position, and the write position increments */
+                    GlyphMetrics metrics = GlyphMetrics.GetGlyphMetrics(g, fo, chr);
+
+                    /* Create a fake "bounding box" based on the write position increments. */
+                    _BoundingBox = new SizeF((float)metrics.CellIncX, (float)metrics.CellIncY);
+
+                    //fullSize = new SizeF((float)metrics.BlackBoxX + Math.Abs(metrics.GlyphOrigin.X), (float)metrics.BlackBoxY + Math.Abs(metrics.GlyphOrigin.Y));
+
                     //Gets exact height and width for drawing more than 1 char. But width is to small to draw char on bitmap as e.g. italic chars will get cropped
-                    _BoundingBox = g.MeasureString(chrString, fo, -1, new StringFormat(StringFormat.GenericTypographic));
+                    //_BoundingBox = g.MeasureString(chrString, fo, -1, new StringFormat(StringFormat.GenericTypographic));
                     // ReSharper disable CompareOfFloatsByEqualityOperator
                     if (_BoundingBox.Height == 0)
                         // ReSharper restore CompareOfFloatsByEqualityOperator
@@ -231,5 +239,188 @@ namespace Vocaluxe.Base.Fonts
 
             return new Rectangle(minX, minY, maxX - minX, bmp.Height - minY);
         }
+
+        private class GlyphMetrics
+        {
+            [StructLayout(LayoutKind.Sequential)]
+            public struct FIXED
+            {
+                public short fract;
+                public short value;
+
+                public static FIXED One { get { FIXED f = new FIXED(); f.value = 1; f.fract = 0; return f; } }
+                public static FIXED Zero { get { FIXED f = new FIXED(); f.value = 0; f.fract = 0; return f; } }
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            public struct MAT2
+            {
+                [MarshalAs(UnmanagedType.Struct)]
+                public FIXED eM11;
+                [MarshalAs(UnmanagedType.Struct)]
+                public FIXED eM12;
+                [MarshalAs(UnmanagedType.Struct)]
+                public FIXED eM21;
+                [MarshalAs(UnmanagedType.Struct)]
+                public FIXED eM22;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            public struct POINT
+            {
+                public int x;
+                public int y;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            public struct GLYPHMETRICS
+            {
+                public int gmBlackBoxX;
+                public int gmBlackBoxY;
+                [MarshalAs(UnmanagedType.Struct)]
+                public POINT gmptGlyphOrigin;
+                public short gmCellIncX;
+                public short gmCellIncY;
+            }
+
+            const int GGO_METRICS = 0;
+            const int GGO_BITMAP = 1;
+            const int GGO_NATIVE = 2;
+            const int GGO_BEZIER = 3;
+            const int GGO_GRAY2_BITMAP = 4;
+            const int GGO_GRAY4_BITMAP = 5;
+            const int GGO_GRAY8_BITMAP = 6;
+            const int GGO_GLYPH_INDEX = 0x0080;
+            const int GGO_UNHINTED = 0x0100;
+
+            [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+            public static extern IntPtr SelectObject(IntPtr hdc, IntPtr hgdiobj);
+            [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+            public static extern bool DeleteObject(IntPtr hdc);
+            [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+            public static extern uint GetGlyphOutline(IntPtr hdc, uint uChar, uint uFormat, out GLYPHMETRICS lpgm, uint cbBuffer, IntPtr lpvBuffer, ref MAT2 lpmat2);
+
+            public static GlyphMetrics GetGlyphMetrics(
+                Graphics graphics,
+                Font font,
+                char character)
+            {
+                return new GlyphMetrics(graphics, font, character);
+            }
+
+            public int BlackBoxX { get { return _Metrics.gmBlackBoxX; } }
+            public int BlackBoxY { get { return _Metrics.gmBlackBoxX; } }
+            public Point GlyphOrigin { get { return new Point(_Metrics.gmptGlyphOrigin.x, _Metrics.gmptGlyphOrigin.y); } }
+            public short CellIncX { get { return _Metrics.gmCellIncX; } }
+            public short CellIncY { get { return _Metrics.gmCellIncY; } }
+
+            private GLYPHMETRICS _Metrics;
+
+            private GlyphMetrics(Graphics graphics, Font font, char character)
+            {
+                IntPtr hDC = IntPtr.Zero;
+                IntPtr hFont = IntPtr.Zero;
+                try
+                {
+                    hDC = graphics.GetHdc();
+                    hFont = font.ToHfont();
+                    IntPtr hFontDefault = SelectObject(hDC, hFont);
+                    MAT2 mat2 = new MAT2();
+                    mat2.eM11 = FIXED.One;
+                    mat2.eM12 = FIXED.Zero;
+                    mat2.eM21 = FIXED.Zero;
+                    mat2.eM22 = FIXED.One;
+                    GetGlyphOutline(hDC, (uint)character, GGO_METRICS, out _Metrics, 0, IntPtr.Zero, ref mat2);
+                    SelectObject(hDC, hFontDefault);
+                }
+                finally
+                {
+                    if (hFont != IntPtr.Zero) DeleteObject(hFont);
+                    if (hDC != IntPtr.Zero) graphics.ReleaseHdc(hDC);
+                }
+            }
+        }
+
+        private class FontMetrics
+        {
+            [StructLayout(LayoutKind.Sequential)]
+            public struct TEXTMETRIC
+            {
+                public int tmHeight;
+                public int tmAscent;
+                public int tmDescent;
+                public int tmInternalLeading;
+                public int tmExternalLeading;
+                public int tmAveCharWidth;
+                public int tmMaxCharWidth;
+                public int tmWeight;
+                public int tmOverhang;
+                public int tmDigitizedAspectX;
+                public int tmDigitizedAspectY;
+                public char tmFirstChar;
+                public char tmLastChar;
+                public char tmDefaultChar;
+                public char tmBreakChar;
+                public byte tmItalic;
+                public byte tmUnderlined;
+                public byte tmStruckOut;
+                public byte tmPitchAndFamily;
+                public byte tmCharSet;
+            }
+            [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+            public static extern IntPtr SelectObject(IntPtr hdc, IntPtr hgdiobj);
+            [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+            public static extern bool GetTextMetrics(IntPtr hdc, out TEXTMETRIC lptm);
+            [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+            public static extern bool DeleteObject(IntPtr hdc);
+            private TEXTMETRIC GenerateTextMetrics(
+                Graphics graphics,
+                Font font)
+            {
+                IntPtr hDC = IntPtr.Zero;
+                TEXTMETRIC textMetric;
+                IntPtr hFont = IntPtr.Zero;
+                try
+                {
+                    hDC = graphics.GetHdc();
+                    hFont = font.ToHfont();
+                    IntPtr hFontDefault = SelectObject(hDC, hFont);
+                    bool result = GetTextMetrics(hDC, out textMetric);
+                    SelectObject(hDC, hFontDefault);
+                }
+                finally
+                {
+                    if (hFont != IntPtr.Zero) DeleteObject(hFont);
+                    if (hDC != IntPtr.Zero) graphics.ReleaseHdc(hDC);
+                }
+                return textMetric;
+            }
+
+            private TEXTMETRIC metrics;
+            public int Height { get { return this.metrics.tmHeight; } }
+            public int Ascent { get { return this.metrics.tmAscent; } }
+            public int Descent { get { return this.metrics.tmDescent; } }
+            public int InternalLeading { get { return this.metrics.tmInternalLeading; } }
+            public int ExternalLeading { get { return this.metrics.tmExternalLeading; } }
+            public int AverageCharacterWidth { get { return this.metrics.tmAveCharWidth; } }
+            public int MaximumCharacterWidth { get { return this.metrics.tmMaxCharWidth; } }
+            public int Weight { get { return this.metrics.tmWeight; } }
+            public int Overhang { get { return this.metrics.tmOverhang; } }
+            public int DigitizedAspectX { get { return this.metrics.tmDigitizedAspectX; } }
+            public int DigitizedAspectY { get { return this.metrics.tmDigitizedAspectY; } }
+
+            private FontMetrics(Graphics graphics, Font font)
+            {
+                this.metrics = this.GenerateTextMetrics(graphics, font);
+            }
+
+            public static FontMetrics GetFontMetrics(
+                Graphics graphics,
+                Font font)
+            {
+                return new FontMetrics(graphics, font);
+            }
+        }
+
     }
 }
