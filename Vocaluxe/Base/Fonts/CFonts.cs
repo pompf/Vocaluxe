@@ -1,4 +1,4 @@
-#region license
+﻿#region license
 // /*
 //     This file is part of Vocaluxe.
 // 
@@ -184,7 +184,7 @@ namespace Vocaluxe.Base.Fonts
 
             CFont font = _GetCurrentFont();
 
-            foreach (char chr in text)
+            foreach ( char chr in text)
             {
                 float w2 = font.GetWidth(chr);
                 float b = (x1 - dx) / w2;
@@ -201,7 +201,7 @@ namespace Vocaluxe.Base.Fonts
                         font.DrawGlyph(chr, dx, y, z, color, b, e);
                     }
                 }
-                dx += w2;
+                dx += w2 ;
             }
         }
         #endregion DrawText

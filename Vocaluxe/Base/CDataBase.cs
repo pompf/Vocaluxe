@@ -38,6 +38,8 @@ using Community.CsharpSqlite;
 using VocaluxeLib;
 using VocaluxeLib.Songs;
 using VocaluxeLib.Draw;
+using VocaluxeLib.Profile;
+using Vocaluxe.Base;
 
 namespace Vocaluxe.Base
 {
@@ -214,7 +216,7 @@ namespace Vocaluxe.Base
                 {
                     reader = command.ExecuteReader();
                 }
-                catch (Exception) {}
+                catch (Exception) { }
 
                 if (reader != null && reader.HasRows)
                 {
@@ -254,6 +256,8 @@ namespace Vocaluxe.Base
             return lastInsertID;
         }
 
+        public static EGameDifficulty difficulty { get; set; }
+
         public static void LoadScore(out List<SScores> scores, SPlayer player)
         {
             using (SQLiteConnection connection = new SQLiteConnection())
@@ -287,21 +291,88 @@ namespace Vocaluxe.Base
 
                     int dataBaseSongID = _GetDataBaseSongID(player, command);
                     if (dataBaseSongID >= 0)
+                        difficulty = CProfiles.GetDifficulty(player.ProfileID);
+
+                    int playercount = CGame.NumPlayer;
+                    if (playercount == 1)
                     {
-                        command.CommandText = "SELECT PlayerName, Score, Date, Difficulty, LineNr, id FROM Scores " +
-                                              "WHERE [SongID] = @SongID AND [Medley] = @Medley AND [Duet] = @Duet AND [ShortSong] = @ShortSong " +
-                                              "ORDER BY [Score] DESC";
+                        command.CommandText = "SELECT PlayerName, MAX(Score), Date, Difficulty, LineNr, id FROM Scores " +
+                                                "WHERE [SongID] = @SongID AND [Medley] = @Medley AND [Duet] = @Duet AND [ShortSong] = @ShortSong AND [Difficulty] = @Difficulty " +
+                                                "GROUP BY Difficulty, PlayerName " +
+                                                "ORDER BY [Difficulty] DESC, [Score] DESC LIMIT 9 ";
                         command.Parameters.Add("@SongID", DbType.Int32, 0).Value = dataBaseSongID;
                         command.Parameters.Add("@Medley", DbType.Int32, 0).Value = medley;
                         command.Parameters.Add("@Duet", DbType.Int32, 0).Value = duet;
                         command.Parameters.Add("@ShortSong", DbType.Int32, 0).Value = shortSong;
-
+                        command.Parameters.Add("@Difficulty", DbType.Int32, 0).Value = difficulty;
                         SQLiteDataReader reader = command.ExecuteReader();
                         if (reader != null && reader.HasRows)
                         {
                             while (reader.Read())
                             {
                                 SScores score = new SScores
+                                {
+                                    Name = reader.GetString(0),
+                                    Score = reader.GetInt32(1),
+                                    Date = new DateTime(reader.GetInt64(2)).ToString("dd/MM/yyyy"),
+                                    Difficulty = (EGameDifficulty)reader.GetInt32(3),
+                                    LineNr = reader.GetInt32(4),
+                                    ID = reader.GetInt32(5)
+                                };
+                                scores.Add(score);
+                            }
+                        }
+                    }
+
+
+                    if (playercount >= 2)
+                    {
+                        command.CommandText = "SELECT PlayerName, MAX(Score), Date, Difficulty, LineNr, id FROM Scores " +
+                                              "WHERE [SongID] = @SongID AND [Medley] = @Medley AND [Duet] = @Duet AND [ShortSong] = @ShortSong AND [Difficulty] = @Difficulty " +
+                                              "GROUP BY Difficulty, PlayerName " +
+                                              "ORDER BY [Difficulty] DESC, [Score] DESC LIMIT 3 ";
+                        command.Parameters.Add("@SongID", DbType.Int32, 0).Value = dataBaseSongID;
+                        command.Parameters.Add("@Medley", DbType.Int32, 0).Value = medley;
+                        command.Parameters.Add("@Duet", DbType.Int32, 0).Value = duet;
+                        command.Parameters.Add("@ShortSong", DbType.Int32, 0).Value = shortSong;
+                        command.Parameters.Add("@Difficulty", DbType.Int32, 0).Value = 2;
+                        SQLiteDataReader reader = command.ExecuteReader();
+                        if (reader != null && reader.HasRows)
+                        {
+                            while (reader.Read())
+                            {
+                                SScores score = new SScores
+                                {
+                                    Name = reader.GetString(0),
+                                    Score = reader.GetInt32(1),
+                                    Date = new DateTime(reader.GetInt64(2)).ToString("dd/MM/yyyy"),
+                                    Difficulty = (EGameDifficulty)reader.GetInt32(3),
+                                    LineNr = reader.GetInt32(4),
+                                    ID = reader.GetInt32(5)
+                                };
+                                scores.Add(score);
+                            }
+                            reader.Dispose();
+                        }
+                        reader.Close();
+                        {
+                            command.CommandText = "SELECT PlayerName, MAX(Score), Date, Difficulty, LineNr, id FROM Scores " +
+                                                  "WHERE [SongID] = @SongID AND [Medley] = @Medley AND [Duet] = @Duet AND [ShortSong] = @ShortSong AND [Difficulty] = @Difficulty " +
+                                                  "GROUP BY Difficulty, PlayerName " +
+                                                  "ORDER BY [Difficulty] DESC, [Score] DESC LIMIT 3 ";
+                            command.Parameters.Add("@SongID", DbType.Int32, 0).Value = dataBaseSongID;
+                            command.Parameters.Add("@Medley", DbType.Int32, 0).Value = medley;
+                            command.Parameters.Add("@Duet", DbType.Int32, 0).Value = duet;
+                            command.Parameters.Add("@ShortSong", DbType.Int32, 0).Value = shortSong;
+                            command.Parameters.Add("@Difficulty", DbType.Int32, 0).Value = 1;
+
+                            reader = command.ExecuteReader();
+
+                            if (reader != null && reader.HasRows)
+                            {
+                                while (reader.Read())
+                                {
+                                    SScores score = new SScores
                                     {
                                         Name = reader.GetString(0),
                                         Score = reader.GetInt32(1),
@@ -310,15 +381,65 @@ namespace Vocaluxe.Base
                                         LineNr = reader.GetInt32(4),
                                         ID = reader.GetInt32(5)
                                     };
+                                    scores.Add(score);
+                                }
 
-                                scores.Add(score);
+                                reader.Dispose();
                             }
-                            reader.Dispose();
+
                         }
+                        reader.Close();
+                        {
+                            command.CommandText = "SELECT PlayerName, MAX(Score), Date, Difficulty, LineNr, id FROM Scores " +
+                                                  "WHERE [SongID] = @SongID AND [Medley] = @Medley AND [Duet] = @Duet AND [ShortSong] = @ShortSong AND [Difficulty] = @Difficulty " +
+                                                  "GROUP BY Difficulty, PlayerName " +
+                                                  "ORDER BY [Difficulty] DESC, [Score] DESC LIMIT 3 ";
+                            command.Parameters.Add("@SongID", DbType.Int32, 0).Value = dataBaseSongID;
+                            command.Parameters.Add("@Medley", DbType.Int32, 0).Value = medley;
+                            command.Parameters.Add("@Duet", DbType.Int32, 0).Value = duet;
+                            command.Parameters.Add("@ShortSong", DbType.Int32, 0).Value = shortSong;
+                            command.Parameters.Add("@Difficulty", DbType.Int32, 0).Value = 0;
+
+                            reader = command.ExecuteReader();
+
+                            if (reader != null && reader.HasRows)
+                            {
+                                while (reader.Read())
+                                {
+                                    SScores score = new SScores
+                                    {
+                                        Name = reader.GetString(0),
+                                        Score = reader.GetInt32(1),
+                                        Date = new DateTime(reader.GetInt64(2)).ToString("dd/MM/yyyy"),
+                                        Difficulty = (EGameDifficulty)reader.GetInt32(3),
+                                        LineNr = reader.GetInt32(4),
+                                        ID = reader.GetInt32(5)
+                                    };
+                                    scores.Add(score);
+                                }
+
+                                reader.Dispose();
+                            }
+                        }
+                        reader.Dispose();
                     }
                 }
             }
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         private static void _IncreaseSongCounter(int dataBaseSongID, SQLiteCommand command)
         {
@@ -574,7 +695,7 @@ namespace Vocaluxe.Base
                     {
                         reader = command.ExecuteReader();
                     }
-                    catch (Exception) {}
+                    catch (Exception) { }
 
                     if (reader == null)
                     {
@@ -679,14 +800,14 @@ namespace Vocaluxe.Base
                     {
                         while (reader.Read())
                         {
-                            SData data = new SData {Id = reader.GetInt32(0), Str1 = reader.GetString(1)};
+                            SData data = new SData { Id = reader.GetInt32(0), Str1 = reader.GetString(1) };
                             Int64 ticks = 0;
 
                             try
                             {
                                 ticks = reader.GetInt64(2);
                             }
-                            catch {}
+                            catch { }
 
                             data.Ticks = _UnixTimeToTicks((int)ticks);
 
@@ -703,7 +824,7 @@ namespace Vocaluxe.Base
                     {
                         while (reader.Read())
                         {
-                            SData data = new SData {Id = reader.GetInt32(0), Str1 = reader.GetString(1), Str2 = reader.GetString(2)};
+                            SData data = new SData { Id = reader.GetInt32(0), Str1 = reader.GetString(1), Str2 = reader.GetString(2) };
                             songs.Add(data);
                         }
                     }
@@ -826,7 +947,7 @@ namespace Vocaluxe.Base
 
                             while (Sqlite3.sqlite3_step(stmt) == Sqlite3.SQLITE_ROW)
                             {
-                                SData data = new SData {Id = Sqlite3.sqlite3_column_int(stmt, 0)};
+                                SData data = new SData { Id = Sqlite3.sqlite3_column_int(stmt, 0) };
 
                                 byte[] bytes = Sqlite3.sqlite3_column_rawbytes(stmt, 1);
                                 data.Str1 = bytes != null ? utf8.GetString(Encoding.Convert(cp1252, utf8, bytes)) : "Someone";
@@ -858,7 +979,7 @@ namespace Vocaluxe.Base
 
                             while (Sqlite3.sqlite3_step(stmt) == Sqlite3.SQLITE_ROW)
                             {
-                                SData data = new SData {Id = Sqlite3.sqlite3_column_int(stmt, 0)};
+                                SData data = new SData { Id = Sqlite3.sqlite3_column_int(stmt, 0) };
 
                                 byte[] bytes = Sqlite3.sqlite3_column_rawbytes(stmt, 1);
                                 data.Str1 = bytes != null ? utf8.GetString(Encoding.Convert(cp1252, utf8, bytes)) : "Someone";
@@ -955,13 +1076,14 @@ namespace Vocaluxe.Base
             command.CommandText = "ALTER TABLE Songs ADD DateAdded BIGINT";
             command.ExecuteNonQuery();
             command.CommandText = "UPDATE Songs SET [DateAdded] = @DateAdded";
-            command.Parameters.Add("@DateAdded",System.Data.DbType.Int64, 0).Value = DateTime.Now.Ticks;
+            command.Parameters.Add("@DateAdded", System.Data.DbType.Int64, 0).Value = DateTime.Now.Ticks;
             command.ExecuteNonQuery();
             command.CommandText = "UPDATE Version SET [Value] = @version";
             command.Parameters.Add("@version", System.Data.DbType.Int32, 0).Value = 3;
             command.ExecuteNonQuery();
 
             //Read NumPlayed from Scores and save to Songs
+
             command.CommandText = "SELECT SongID, Date FROM Scores ORDER BY Date ASC";
 
             SQLiteDataReader reader;
@@ -969,7 +1091,7 @@ namespace Vocaluxe.Base
             {
                 reader = command.ExecuteReader();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }
@@ -1016,7 +1138,7 @@ namespace Vocaluxe.Base
                     CLog.LogError("Error on import high score data. Can't open source database \"" + sourceDBPath + "\" (" + e.Message + ")");
                     return false;
                 }
-                #endregion open db
+            #endregion open db
 
                 using (SQLiteCommand cmdSource = new SQLiteCommand(connSource))
                 {
@@ -1070,7 +1192,7 @@ namespace Vocaluxe.Base
 
             if (_ConnectionCover == null)
             {
-                _ConnectionCover = new SQLiteConnection {ConnectionString = "Data Source=" + _CoverFilePath};
+                _ConnectionCover = new SQLiteConnection { ConnectionString = "Data Source=" + _CoverFilePath };
                 _ConnectionCover.Open();
             }
 
@@ -1224,7 +1346,7 @@ namespace Vocaluxe.Base
                     {
                         reader = command.ExecuteReader();
                     }
-                    catch (Exception) {}
+                    catch (Exception) { }
 
                     if (reader == null)
                     {
@@ -1449,7 +1571,7 @@ namespace Vocaluxe.Base
                     {
                         reader = command.ExecuteReader();
                     }
-                    catch (Exception) {}
+                    catch (Exception) { }
 
                     if (reader == null)
                     {
@@ -1541,5 +1663,8 @@ namespace Vocaluxe.Base
             t70 = t70.AddSeconds(unixTime);
             return t70.Ticks;
         }
+
+
+
     }
 }

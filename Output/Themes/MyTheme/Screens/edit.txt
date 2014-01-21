@@ -1,0 +1,14 @@
+edit dans skin red xml :
+
+colors / player = couleur des lignes de joueurs etc
+
+colorchemes,  dim = glow autour des notes
+
+player2dim2 = couleur Joueur 2 pour score etc
+
+
+
+
+edit dans screensing .xml
+
+ textscorep1n1 = score

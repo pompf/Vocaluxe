@@ -128,7 +128,7 @@ namespace Vocaluxe.Base
         public const int MaxNumPlayer = 6;
         public const int MaxScore = 10000;
         public const int LinebonusScore = 1000;
-        public const int MinScoreForDB = 100;
+        public const int MinScoreForDB = 3000;
 
         public const float LyricHelperEnableTime = 5f;
         public const float LyricHelperMoveTime = 1.5f;

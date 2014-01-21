@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <ThemeSystemVersion>5</ThemeSystemVersion>
+  <Info>
+    <Name>MyTheme</Name>
+    <Author>bohning and pompf</Author>
+    <SkinFolder>MyTheme</SkinFolder>
+  </Info>
+  <Cursor>
+    <Skin>Cursor</Skin>
+    <W>25,000</W>
+    <H>25,000</H>
+    <Color>StaticColor</Color>
+  </Cursor>
+</root>

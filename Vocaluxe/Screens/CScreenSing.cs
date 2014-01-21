@@ -124,7 +124,6 @@ namespace Vocaluxe.Screens
         public override void Init()
         {
             base.Init();
-
             List<string> texts = new List<string> {_TextSongName, _TextTime, _TextPause, _TextDuetName1, _TextDuetName2, _TextMedleyCountdown};
             _BuildTextStrings(texts);
             _ThemeTexts = texts.ToArray();

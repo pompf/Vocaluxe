@@ -70,7 +70,7 @@ namespace Vocaluxe.Screens
         public override void Init()
         {
             base.Init();
-
+            
             List<string> statics = new List<string>();
             statics.AddRange(_StaticPlayerAvatar);
             statics.AddRange(_StaticPlayer);
@@ -548,6 +548,7 @@ namespace Vocaluxe.Screens
 
         public override bool UpdateGame()
         {
+           
             if (_ProfilesChanged || _AvatarsChanged)
                 _LoadProfiles();
 
@@ -563,7 +564,7 @@ namespace Vocaluxe.Screens
         {
             base.OnShow();
             CSound.RecordStart();
-
+            CBackgroundMusic.Disabled = true;
             _NameSelections[_NameSelection].Init();
             _LoadProfiles();
             _SetInteractionToButton(_Buttons[_ButtonStart]);

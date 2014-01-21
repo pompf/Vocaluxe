@@ -230,5 +230,57 @@
 		<Name>Alle Songs</Name>
 		<Path>AlleSongs.png</Path>
 	</Cover56>
+    	<Cover57>
+		<Name>Anglais</Name>
+		<Path>Anglais.png</Path>
+	</Cover57>
+    	<Cover58>
+		<Name>Allemand</Name>
+		<Path>Allemand.png</Path>
+	</Cover58>
+    	<Cover59>
+		<Name>Japonais</Name>
+		<Path>Japonais.png</Path>
+	</Cover59>
+    	<Cover60>
+		<Name>Other</Name>
+		<Path>Other.png</Path>
+	</Cover60>
+    	<Cover61>
+		<Name>[ Dessins Animés ] Français</Name>
+		<Path>DAfr.png</Path>
+	</Cover61>
+        	<Cover62>
+		<Name>[ Dessins Animés ] Anglais</Name>
+		<Path>DAuk.png</Path>
+	</Cover62>
+            <Cover63>
+		<Name>[ Dessins Animés ] Espagnols</Name>
+		<Path>DAsp.png</Path>
+	</Cover63>
+        	<Cover64>
+		<Name>Test</Name>
+		<Path>Test.png</Path>
+	</Cover64>
+            <Cover65>
+		<Name>Français</Name>
+		<Path>Français.png</Path>
+	</Cover65>
+            <Cover66>
+		<Name>Japonais Dual</Name>
+		<Path>Japonais Dual.png</Path>
+	</Cover66>
+            <Cover67>
+		<Name>Japonais Kanji</Name>
+		<Path>Japonais Kanji.png</Path>
+	</Cover67>
+            <Cover68>
+		<Name>Japonais Romaji</Name>
+		<Path>Japonais Romaji.png</Path>
+	</Cover68>
+            <Cover69>
+		<Name>Autre</Name>
+		<Path>Autre.png</Path>
+	</Cover69>
 	</Cover>
 </root>

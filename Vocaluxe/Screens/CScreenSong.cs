@@ -697,12 +697,11 @@ namespace Vocaluxe.Screens
 
             return true;
         }
-
+// enable or disable player selection screen background
         public override void OnClose()
         {
-            base.OnClose();
-            CBackgroundMusic.Disabled = false;
-            _SongMenus[_SongMenu].OnHide();
+            base.OnClose();          
+           _SongMenus[_SongMenu].OnHide();
         }
 
         public override void ApplyVolume()
